@@ -43,20 +43,24 @@ cd openscap-prototype
 To compile the CLI and plugin:
 
 ```bash
-go build -o openscap-prototype .
+go build -o bin/openscap-prototype .
 ```
 
-## Running
-Start the plugin server:
+## Run
 
+Build Prototype CLI
 ```bash
-./openscap-prototype
+git clone https://github.com/jpower432/compliance-to-policy-go.git
+git checkout feat/v2-module
+cd v2
+make build
 ```
 
-In another terminal, run the **Comply-Prototype** CLI to connect to the server:
-
+Run
 ```bash
-./comply-prototype scan
+cd ~/openscap-prototype/
+export PVP_PLUGIN=./bin/openscap-prototype
+~/compliance-to-policy-go/v2/bin/test-cli scan
 ```
 
 ### Testing

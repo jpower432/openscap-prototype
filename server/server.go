@@ -1,131 +1,125 @@
 package server
 
 import (
-	"context"
+	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
-	"log"
-	"net"
+	"github.com/antchfx/xmlquery"
+	"github.com/oscal-compass/compliance-to-policy-go/v2/policy"
 	"os"
-	"os/signal"
-	"syscall"
+	"path/filepath"
+	"time"
 
-	"github.com/marcusburghardt/comply-prototype/proto"
+	"github.com/ComplianceAsCode/compliance-operator/pkg/utils"
+	"github.com/oscal-compass/compliance-to-policy-go/v2/oscal/observations"
+	"github.com/oscal-compass/compliance-to-policy-go/v2/oscal/rules"
+
 	"github.com/marcusburghardt/openscap-prototype/config"
 	"github.com/marcusburghardt/openscap-prototype/scan"
-	"google.golang.org/grpc"
 )
 
+var _ policy.Provider = &PluginServer{}
+
 type PluginServer struct {
-	proto.UnimplementedScanServiceServer
 	Config *config.Config
 }
 
-func (s *PluginServer) Execute(ctx context.Context, req *proto.ScanRequest) (*proto.ScanResponse, error) {
-	action := req.GetAction()
+func New(cfg *config.Config) PluginServer {
+	return PluginServer{Config: cfg}
+}
 
-	switch action {
-	case "scan":
-		rc, err := scan.ScanSystem(s.Config, "cis")
+func (s PluginServer) GetSchema() ([]byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s PluginServer) UpdateConfiguration(message json.RawMessage) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s PluginServer) Generate(policy rules.Policy) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s PluginServer) GetResults() (observations.PVPResult, error) {
+	fmt.Println("I have been scanned")
+	pvpResults := observations.PVPResult{
+		ObservationsByCheck: make([]*observations.ObservationByCheck, 0),
+	}
+	_, err := scan.ScanSystem(s.Config, "cis")
+	if err != nil {
+		return observations.PVPResult{}, err
+	}
+
+	openscapFiles, err := config.DefineFilesPaths(s.Config)
+	if err != nil {
+		return observations.PVPResult{}, err
+	}
+	arfFile, ok := openscapFiles["arf"]
+	if !ok {
+		return observations.PVPResult{}, errors.New("ARF file location not defined")
+	}
+
+	// get some results here
+	file, err := os.Open(filepath.Clean(arfFile))
+	if err != nil {
+		return observations.PVPResult{}, err
+	}
+	defer file.Close()
+
+	xmlnode, err := utils.ParseContent(bufio.NewReader(file))
+	if err != nil {
+		return observations.PVPResult{}, err
+	}
+	results := xmlnode.SelectElements("//rule-result")
+	for i := range results {
+		result := results[i]
+		ruleIDRef := result.SelectAttr("idref")
+
+		mappedResult, err := mapResultStatus(result)
 		if err != nil {
-			log.Printf("Error executing command: %v", err)
-			return &proto.ScanResponse{ReturnCode: rc}, nil
+			return observations.PVPResult{}, err
 		}
-	case "remediate":
-		err := fmt.Errorf("action not yet implemented: %s", action)
-		return &proto.ScanResponse{ReturnCode: 1}, err
-	default:
-		err := fmt.Errorf("unknown action: %s", action)
-		return &proto.ScanResponse{ReturnCode: 1}, err
-	}
-
-	return &proto.ScanResponse{ReturnCode: 0}, nil
-}
-
-func isSocketFile(fileInfo os.FileInfo) (bool, error) {
-	if fileInfo.Mode()&os.ModeSocket != 1 {
-		return false, fmt.Errorf("there is an existing file using the socket path: %s", fileInfo.Name())
-	}
-	return true, nil
-}
-
-func setupListener(socket string) (net.Listener, error) {
-	if stat, err := os.Stat(socket); err == nil {
-		if _, err := isSocketFile(stat); err != nil {
-			return nil, err
+		observation := &observations.ObservationByCheck{
+			Title:     ruleIDRef,
+			Methods:   []string{"AUTOMATED"},
+			Collected: time.Now(),
+			CheckID:   "mycheck",
+			Subjects: []*observations.Subject{
+				&observations.Subject{
+					Title:       "My Comp",
+					Type:        "component",
+					ResourceID:  ruleIDRef,
+					EvaluatedOn: time.Now(),
+					Result:      mappedResult,
+					Reason:      "my reason",
+				},
+			},
 		}
-		if err := os.Remove(socket); err != nil {
-			return nil, fmt.Errorf("failed to remove existing socket: %w", err)
-		}
+		pvpResults.ObservationsByCheck = append(pvpResults.ObservationsByCheck, observation)
 	}
-	listener, err := net.Listen("unix", socket)
-	if err != nil {
-		return nil, fmt.Errorf("failed to listen on socket: %w", err)
-	}
-	return listener, nil
+
+	return pvpResults, nil
 }
 
-func cleanupSocket(socket string) {
-	if stat, err := os.Stat(socket); err == nil {
-		if _, err := isSocketFile(stat); err != nil {
-			log.Printf("Error removing socket file: %v", err)
-		} else if err := os.Remove(socket); err != nil && !errors.Is(err, fs.ErrNotExist) {
-			log.Printf("Error removing socket file: %v", err)
-		}
+func mapResultStatus(result *xmlquery.Node) (observations.Result, error) {
+	resultEl := result.SelectElement("result")
+	if resultEl == nil {
+		return observations.ResultInvalid, errors.New("result node has no 'result' attribute")
 	}
-}
-
-func createGRPCServer(cfg *config.Config) *grpc.Server {
-	grpcServer := grpc.NewServer()
-	pluginServer := &PluginServer{Config: cfg}
-	proto.RegisterScanServiceServer(grpcServer, pluginServer)
-	return grpcServer
-}
-
-func runServer(grpcServer *grpc.Server, listener net.Listener, socket string) {
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-
-	// Start the server in a separate goroutine so we can better control the execution
-	go func() {
-		log.Printf("Server listening on Unix socket %s", socket)
-		if err := grpcServer.Serve(listener); err != nil && err != grpc.ErrServerStopped {
-			log.Fatalf("Failed to serve gRPC request: %v", err)
-		}
-	}()
-
-	<-stop
-	grpcServer.GracefulStop()
-}
-
-func getSocketPath(socket string) (string, error) {
-	socketFile, err := config.SanitizeInput(socket)
-	if err != nil {
-		return "", err
+	switch resultEl.InnerText() {
+	case "pass", "fixed":
+		return observations.ResultPass, nil
+	case "fail":
+		return observations.ResultFail, nil
+	case "notselected", "notapplicable":
+		return observations.ResultError, nil
+	case "error", "unknown":
+		return observations.ResultError, nil
 	}
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get home directory: %w", err)
-	}
-	socketPath := homeDir + "/" + socketFile
-	return socketPath, nil
-}
-
-func StartServer(cfg *config.Config) error {
-	socket, err := getSocketPath(cfg.Server.Socket)
-	if err != nil {
-		return err
-	}
-
-	listener, err := setupListener(socket)
-	if err != nil {
-		return fmt.Errorf("failed to setup listener: %v", err)
-	}
-	defer cleanupSocket(socket)
-
-	grpcServer := createGRPCServer(cfg)
-	runServer(grpcServer, listener, socket)
-	return nil
+	return observations.ResultInvalid, fmt.Errorf("couldn't match %s ", resultEl.InnerText())
 }

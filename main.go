@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	hplugin "github.com/hashicorp/go-plugin"
+	"github.com/oscal-compass/compliance-to-policy-go/v2/plugin"
 	"log"
 
 	"github.com/marcusburghardt/openscap-prototype/config"
@@ -38,13 +40,17 @@ func initializeConfig() (*config.Config, error) {
 }
 
 func main() {
-	config, err := initializeConfig()
+	cfg, err := initializeConfig()
 	if err != nil {
 		log.Fatalf("Failed to initialize config: %v", err)
 	}
 
-	err = server.StartServer(config)
-	if err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	openSCAPPlugin := server.New(cfg)
+	hplugin.Serve(&hplugin.ServeConfig{
+		HandshakeConfig: plugin.Handshake,
+		Plugins: map[string]hplugin.Plugin{
+			plugin.PVPPluginName: &plugin.PVPPlugin{Impl: openSCAPPlugin},
+		},
+		GRPCServer: hplugin.DefaultGRPCServer,
+	})
 }
