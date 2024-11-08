@@ -60,6 +60,7 @@ Run
 ```bash
 cd ~/openscap-prototype/
 export PVP_PLUGIN=./bin/openscap-prototype
+export COMPDEF_PATH=~/compliance-to-policy-go/v2/testdata/component-definition.template.json
 ~/compliance-to-policy-go/v2/bin/test-cli scan
 ```
 

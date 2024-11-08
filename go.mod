@@ -82,4 +82,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/oscal-compass/compliance-to-policy-go/v2 => github.com/jpower432/compliance-to-policy-go/v2 v2.0.0-20241105215822-038a55cb1455
+replace github.com/oscal-compass/compliance-to-policy-go/v2 => github.com/jpower432/compliance-to-policy-go/v2 v2.0.0-20241108231916-f4c1cadd82f9

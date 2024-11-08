@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/antchfx/xmlquery"
-	"github.com/oscal-compass/compliance-to-policy-go/v2/policy"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/ComplianceAsCode/compliance-operator/pkg/utils"
+	"github.com/antchfx/xmlquery"
 	"github.com/oscal-compass/compliance-to-policy-go/v2/oscal/observations"
-	"github.com/oscal-compass/compliance-to-policy-go/v2/oscal/rules"
+	"github.com/oscal-compass/compliance-to-policy-go/v2/oscal/plan"
+	"github.com/oscal-compass/compliance-to-policy-go/v2/policy"
 
 	"github.com/marcusburghardt/openscap-prototype/config"
 	"github.com/marcusburghardt/openscap-prototype/scan"
@@ -30,18 +30,18 @@ func New(cfg *config.Config) PluginServer {
 }
 
 func (s PluginServer) GetSchema() ([]byte, error) {
-	//TODO implement me
-	panic("implement me")
+	fmt.Println("Get schema")
+	return nil, nil
 }
 
 func (s PluginServer) UpdateConfiguration(message json.RawMessage) error {
-	//TODO implement me
-	panic("implement me")
+	fmt.Println("Updating configuration")
+	return nil
 }
 
-func (s PluginServer) Generate(policy rules.Policy) error {
-	//TODO implement me
-	panic("implement me")
+func (s PluginServer) Generate(policy plan.Policy) error {
+	fmt.Println("Generating policy")
+	return nil
 }
 
 func (s PluginServer) GetResults() (observations.PVPResult, error) {
