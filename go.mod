@@ -48,6 +48,7 @@ require (
 	github.com/openshift/api v0.0.0-20231117201702-2ea16bbab164 // indirect
 	github.com/openshift/library-go v0.0.0-20231102154438-cfcf2b4fbc87 // indirect
 	github.com/openshift/machine-config-operator v0.0.1-0.20230815171034-c2bb862bc08a // indirect
+	github.com/oscal-compass/oscal-sdk-go v0.0.0-00010101000000-000000000000 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.17.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
@@ -82,4 +83,5 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/oscal-compass/compliance-to-policy-go/v2 => github.com/jpower432/compliance-to-policy-go/v2 v2.0.0-20241108231916-f4c1cadd82f9
+replace github.com/oscal-compass/compliance-to-policy-go/v2 => github.com/jpower432/compliance-to-policy-go/v2 v2.0.0-20241125133414-da718db6d220
+replace github.com/oscal-compass/oscal-sdk-go => github.com/jpower432/oscal-sdk-go v0.0.0-20241125231301-cd235efe9126

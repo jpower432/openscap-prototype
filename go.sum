@@ -104,8 +104,10 @@ github.com/jhump/protoreflect v1.15.1 h1:HUMERORf3I3ZdX05WaQ6MIpd/NJ434hTp5YiKgf
 github.com/jhump/protoreflect v1.15.1/go.mod h1:jD/2GMKKE6OqX8qTjhADU1e6DShO+gavG9e0Q693nKo=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
-github.com/jpower432/compliance-to-policy-go/v2 v2.0.0-20241108231916-f4c1cadd82f9 h1:/2eKMS4aWAwnjM4NIM3GUbZBtkU8egIjG2NxMJddyZE=
-github.com/jpower432/compliance-to-policy-go/v2 v2.0.0-20241108231916-f4c1cadd82f9/go.mod h1:fzOGFLdwJ1cF432cCqPi9vxGgMfOPjR0tMF73HynD3Q=
+github.com/jpower432/compliance-to-policy-go/v2 v2.0.0-20241125133414-da718db6d220 h1:vQfIXSpz/OZyPQA8OJ5+fCDx4LehGjXSWQwrTtf2Rjw=
+github.com/jpower432/compliance-to-policy-go/v2 v2.0.0-20241125133414-da718db6d220/go.mod h1:3hmOKXrtYRtI86KFNWRm2ApHqjG/AVmEyqCxhqI5PdU=
+github.com/jpower432/oscal-sdk-go v0.0.0-20241125231301-cd235efe9126 h1:GupIjT1VOVCuEbZ6Qe+j+0N7kta0djSjUNq0UCcyo0Y=
+github.com/jpower432/oscal-sdk-go v0.0.0-20241125231301-cd235efe9126/go.mod h1:5InngF8r6VBT0ADblx6X2Vggssg/gRgDp3lgoCCFW3o=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
@@ -191,8 +193,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
-github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
-github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
+github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
+github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/vincent-petithory/dataurl v1.0.0 h1:cXw+kPto8NLuJtlMsI152irrVw9fRDX8AbShPRpg2CI=
 github.com/vincent-petithory/dataurl v1.0.0/go.mod h1:FHafX5vmDzyP+1CQATJn7WFKc9CvnvxyvZy6I1MrG/U=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
