@@ -58,28 +58,28 @@ func validateTailoringFile(path string) (string, error) {
 	return tailoringFile, nil
 }
 
-func ScanSystem(cfg *config.Config, profile string) (int32, error) {
+func ScanSystem(cfg *config.Config) (int32, error) {
 	openscapFiles, err := config.DefineFilesPaths(cfg)
 	if err != nil {
-		return 1, err
+		return 1, fmt.Errorf("invalid paths: %w", err)
 	}
 
 	_, err = validateDataStream(openscapFiles["datastream"])
 	if err != nil {
-		return 1, err
+		return 1, fmt.Errorf("invalid data stream: %w")
 	}
 
 	policy, err := validateTailoringFile(openscapFiles["policy"])
 	if err != nil {
-		return 1, err
+		return 1, fmt.Errorf("invalid tailoring file: %w", err)
 	}
 	if policy == "" {
 		openscapFiles["policy"] = ""
 	}
 
-	output, err := oscap.OscapScan(openscapFiles, profile)
+	output, err := oscap.OscapScan(openscapFiles, cfg.Files.Profile)
 	if err != nil {
-		return 1, err
+		return 1, fmt.Errorf("failed scan: %w", err)
 	}
 	// Output used during the tests. Maybe it is better to store in a file later.
 	fmt.Printf("Output: \n%sņ", output)

@@ -16,7 +16,7 @@ import (
 func parseFlags() (string, error) {
 	exePath, err := os.Executable()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get executable path: %v", err)
 	}
 
 	// Get the directory of the executable
@@ -26,7 +26,7 @@ func parseFlags() (string, error) {
 	// Construct the full path to the file
 	configFile, err := config.SanitizeAndValidatePath(configPath, false)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to sanitize or validate config file: %w", err)
 	}
 
 	return configFile, nil
@@ -54,8 +54,7 @@ func main() {
 
 	openSCAPPlugin := server.New(cfg)
 	pluginByType := map[string]hplugin.Plugin{
-		plugin.PVPPluginName:        &plugin.PVPPlugin{Impl: openSCAPPlugin},
-		plugin.GenerationPluginName: &plugin.GeneratorPlugin{Impl: openSCAPPlugin},
+		plugin.PVPPluginName: &plugin.PVPPlugin{Impl: openSCAPPlugin},
 	}
 	plugin.Register(pluginByType)
 }

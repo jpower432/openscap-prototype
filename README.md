@@ -48,22 +48,37 @@ go build -o bin/openscap-prototype .
 
 ## Run
 
-Build Prototype CLI
 ```bash
-git clone https://github.com/jpower432/compliance-to-policy-go.git
-git checkout feat/v2-module
-cd v2
+git clone https://github.com/complytime/complytime.git
 make build
 ```
 
-Run
+Install the plugin
 ```bash
-export COMPDEF_PATH=~/compliance-to-policy-go/v2/testdata/component-definition.template.json
-cp -rp bin/openscap-prototype ~/compliance-to-policy-go/v2/bin/plugin-dir/example
-cp -rp oscap-config.yml ~/compliance-to-policy-go/v2/bin/plugin-dir/
-cd ~/compliance-to-policy-go/v2/
-./bin/test-cli generate
-./bin/test-cli scan
+cp -rp bin/openscap-prototype ~/.config/complytime/plugins
+cp -rp oscap-config.yml ~/.config/complytime/plugins
+```
+
+Create the manifest
+```bash
+checksum=$(sha256sum ~/.config/complytime/plugins/openscap-prototype| cut -d ' ' -f 1 )
+cat > ~/.config/complytime/plugins/c2p-openscap-manifest.json << EOF
+{
+  "metadata": {
+    "id": "openscap",
+    "description": "My openscap plugin",
+    "version": "0.0.1",
+    "types": ["pvp"]
+  },
+  "executablePath": "openscap-prototype",
+  "sha256": "$checksum"
+}
+EOF
+```
+
+Run with the plugin
+```bash
+complytime scan
 ```
 
 ### Testing

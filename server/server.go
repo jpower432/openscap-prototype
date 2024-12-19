@@ -2,7 +2,6 @@ package server
 
 import (
 	"bufio"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -14,14 +13,13 @@ import (
 	"github.com/ComplianceAsCode/compliance-operator/pkg/utils"
 	"github.com/ComplianceAsCode/compliance-operator/pkg/xccdf"
 	"github.com/antchfx/xmlquery"
-	"github.com/oscal-compass/compliance-to-policy-go/v2/providers"
+	"github.com/oscal-compass/compliance-to-policy-go/v2/policy"
 
 	"github.com/marcusburghardt/openscap-prototype/config"
 	"github.com/marcusburghardt/openscap-prototype/scan"
 )
 
-var _ providers.PolicyProvider = (*PluginServer)(nil)
-var _ providers.GenerationProvider = (*PluginServer)(nil)
+var _ policy.Provider = (*PluginServer)(nil)
 
 const ovalCheckType = "http://oval.mitre.org/XMLSchema/oval-definitions-5"
 
@@ -33,17 +31,8 @@ func New(cfg *config.Config) PluginServer {
 	return PluginServer{Config: cfg}
 }
 
-func (s PluginServer) GetSchema() ([]byte, error) {
-	fmt.Println("Get schema")
-	return nil, nil
-}
-
-func (s PluginServer) UpdateConfiguration(message json.RawMessage) error {
-	fmt.Println("Updating configuration")
-	return nil
-}
-
-func (s PluginServer) Generate(policy providers.Policy) error {
+func (s PluginServer) Generate(policy policy.Policy) error {
+	fmt.Println("Generating a tailoring file")
 	tailoringXML, err := policyToXML(policy, s.Config)
 	if err != nil {
 		return err
@@ -65,35 +54,33 @@ func (s PluginServer) Generate(policy providers.Policy) error {
 	return nil
 }
 
-func (s PluginServer) GetResults() (providers.PVPResult, error) {
-	fmt.Println("I have been scanned")
-	pvpResults := providers.PVPResult{
-		ObservationsByCheck: make([]providers.ObservationByCheck, 0),
-	}
-	_, err := scan.ScanSystem(s.Config, "cis")
+func (s PluginServer) GetResults(_ policy.Policy) (policy.PVPResult, error) {
+	fmt.Println("I am being scanned by OpenSCAP")
+	pvpResults := policy.PVPResult{}
+	_, err := scan.ScanSystem(s.Config)
 	if err != nil {
-		return providers.PVPResult{}, err
+		return policy.PVPResult{}, err
 	}
 
 	openscapFiles, err := config.DefineFilesPaths(s.Config)
 	if err != nil {
-		return providers.PVPResult{}, err
+		return policy.PVPResult{}, err
 	}
 	arfFile, ok := openscapFiles["arf"]
 	if !ok {
-		return providers.PVPResult{}, errors.New("ARF file location not defined")
+		return policy.PVPResult{}, errors.New("ARF file location not defined")
 	}
 
 	// get some results here
 	file, err := os.Open(filepath.Clean(arfFile))
 	if err != nil {
-		return providers.PVPResult{}, err
+		return policy.PVPResult{}, err
 	}
 	defer file.Close()
 
 	xmlnode, err := utils.ParseContent(bufio.NewReader(file))
 	if err != nil {
-		return providers.PVPResult{}, err
+		return policy.PVPResult{}, err
 	}
 
 	ruleTable := newRuleHashTable(xmlnode)
@@ -121,14 +108,14 @@ func (s PluginServer) GetResults() (providers.PVPResult, error) {
 
 		mappedResult, err := mapResultStatus(result)
 		if err != nil {
-			return providers.PVPResult{}, err
+			return policy.PVPResult{}, err
 		}
-		observation := providers.ObservationByCheck{
+		observation := policy.ObservationByCheck{
 			Title:     ruleIDRef,
 			Methods:   []string{"AUTOMATED"},
 			Collected: time.Now(),
 			CheckID:   ovalCheckName,
-			Subjects: []providers.Subject{
+			Subjects: []policy.Subject{
 				{
 					Title:       "My Comp",
 					Type:        "component",
@@ -145,26 +132,26 @@ func (s PluginServer) GetResults() (providers.PVPResult, error) {
 	return pvpResults, nil
 }
 
-func mapResultStatus(result *xmlquery.Node) (providers.Result, error) {
+func mapResultStatus(result *xmlquery.Node) (policy.Result, error) {
 	resultEl := result.SelectElement("result")
 	if resultEl == nil {
-		return providers.ResultInvalid, errors.New("result node has no 'result' attribute")
+		return policy.ResultInvalid, errors.New("result node has no 'result' attribute")
 	}
 	switch resultEl.InnerText() {
 	case "pass", "fixed":
-		return providers.ResultPass, nil
+		return policy.ResultPass, nil
 	case "fail":
-		return providers.ResultFail, nil
+		return policy.ResultFail, nil
 	case "notselected", "notapplicable":
-		return providers.ResultError, nil
+		return policy.ResultError, nil
 	case "error", "unknown":
-		return providers.ResultError, nil
+		return policy.ResultError, nil
 	}
 
-	return providers.ResultInvalid, fmt.Errorf("couldn't match %s ", resultEl.InnerText())
+	return policy.ResultInvalid, fmt.Errorf("couldn't match %s ", resultEl.InnerText())
 }
 
-func policyToXML(tp providers.Policy, config *config.Config) (string, error) {
+func policyToXML(tp policy.Policy, config *config.Config) (string, error) {
 	tailoring := xccdf.TailoringElement{
 		XMLNamespaceURI: xccdf.XCCDFURI,
 		ID:              getTailoringID(),
@@ -192,9 +179,9 @@ func policyToXML(tp providers.Policy, config *config.Config) (string, error) {
 	return xccdf.XMLHeader + "\n" + string(output), nil
 }
 
-func getSelections(tp providers.Policy) []xccdf.SelectElement {
-	selections := []xccdf.SelectElement{}
-	for _, rule := range tp.RuleSets {
+func getSelections(tp policy.Policy) []xccdf.SelectElement {
+	var selections []xccdf.SelectElement
+	for _, rule := range tp {
 		selections = append(selections, xccdf.SelectElement{
 			IDRef:    rule.Rule.ID,
 			Selected: true,
@@ -204,16 +191,23 @@ func getSelections(tp providers.Policy) []xccdf.SelectElement {
 	return selections
 }
 
-func getValuesFromVariables(tp providers.Policy) []xccdf.SetValueElement {
-	values := []xccdf.SetValueElement{}
-	for _, parameter := range tp.Parameters {
-		values = append(values, xccdf.SetValueElement{
-			IDRef: parameter.ID,
-			Value: parameter.Value,
-		})
+func getValuesFromVariables(tp policy.Policy) []xccdf.SetValueElement {
+	var values []xccdf.SetValueElement
+	if len(tp) != 0 {
+		for _, rule := range tp {
+			if rule.Rule.Parameter == nil {
+				continue
+			}
+
+			values = append(values, xccdf.SetValueElement{
+				IDRef: rule.Rule.Parameter.ID,
+				Value: rule.Rule.Parameter.Value,
+			})
+		}
+		return values
 	}
 
-	return values
+	return nil
 }
 
 // GetXCCDFProfileID gets a profile xccdf ID from the TailoredProfile object

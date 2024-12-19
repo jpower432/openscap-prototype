@@ -3,8 +3,9 @@ server:
   socket: server_socket.sock
 files:
   datastream: /usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml
-  workspace: /tmp/complytime
+  workspace: /complytime-workspace
   plugindir: openscap
   policy: tailoring_policy.xml
+  profile: cis
   results: results.xml
   arf: arf.xml

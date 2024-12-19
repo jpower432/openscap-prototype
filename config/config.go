@@ -21,6 +21,7 @@ type Config struct {
 		Workspace  string `yaml:"workspace"`
 		PluginDir  string `yaml:"plugindir"`
 		Policy     string `yaml:"policy"`
+		Profile    string `yaml:"profile"`
 		Results    string `yaml:"results"`
 		ARF        string `yaml:"arf"`
 	} `yaml:"files"`
